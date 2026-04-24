@@ -10,6 +10,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Rename directory for Dart package naming
+        run: |
+          cd ..
+          mv birthday-reminder-ios birthday_reminder_ios
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -17,15 +22,19 @@ jobs:
           channel: 'stable'
 
       - name: Generate iOS project files
+        working-directory: ../birthday_reminder_ios
         run: flutter create . --platforms ios
 
       - name: Install dependencies
+        working-directory: ../birthday_reminder_ios
         run: flutter pub get
 
       - name: Build iOS (no codesign)
+        working-directory: ../birthday_reminder_ios
         run: flutter build ios --release --no-codesign
 
       - name: Package IPA
+        working-directory: ../birthday_reminder_ios
         run: |
           mkdir -p Payload
           cp -r build/ios/iphoneos/Runner.app Payload/
@@ -35,4 +44,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: birthday-reminder-ios
-          path: birthday_reminder.ipa
+          path: ../birthday_reminder_ios/birthday_reminder.ipa
