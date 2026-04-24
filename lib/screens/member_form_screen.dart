@@ -15,6 +15,8 @@ class MemberFormScreen extends ConsumerStatefulWidget {
 class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _lunarTimeController = TextEditingController();
+  final _solarTimeController = TextEditingController();
 
   int _birthdayType = BirthdayType.lunar;
   int _repeatRule = RepeatRule.yearly;
@@ -46,6 +48,9 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
           hour: int.tryParse(parts[0]) ?? 8,
           minute: int.tryParse(parts[1]) ?? 0,
         );
+        _lunarTimeController.text = _formatTime(_lunarTime);
+      } else {
+        _lunarTimeController.text = _formatTime(_lunarTime);
       }
       _solarYear = m.solarYear;
       _solarMonth = m.solarMonth;
@@ -56,6 +61,9 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
           hour: int.tryParse(parts[0]) ?? 8,
           minute: int.tryParse(parts[1]) ?? 0,
         );
+        _solarTimeController.text = _formatTime(_solarTime);
+      } else {
+        _solarTimeController.text = _formatTime(_solarTime);
       }
     } else {
       _solarYear = DateTime.now().year - 30;
@@ -65,29 +73,31 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _lunarTimeController.dispose();
+    _solarTimeController.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickTime(bool isLunar) async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: isLunar ? _lunarTime : _solarTime,
-    );
-    if (picked != null) {
-      setState(() {
-        if (isLunar) {
-          _lunarTime = picked;
-        } else {
-          _solarTime = picked;
-        }
-      });
-    }
   }
 
   String _formatTime(TimeOfDay t) {
     final h = t.hour.toString().padLeft(2, '0');
     final m = t.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  String _formatTimeForDb(TimeOfDay t) {
+    final h = t.hour.toString().padLeft(2, '0');
+    final m = t.minute.toString().padLeft(2, '0');
     return '$h:$m:00';
+  }
+
+  TimeOfDay? _parseTime(String text) {
+    final parts = text.split(':');
+    if (parts.length != 2) return null;
+    final h = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    if (h == null || m == null) return null;
+    if (h < 0 || h > 23 || m < 0 || m > 59) return null;
+    return TimeOfDay(hour: h, minute: m);
   }
 
   void _save() {
@@ -173,12 +183,19 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('提醒时间'),
-              subtitle: Text(_formatTime(_lunarTime)),
-              trailing: const Icon(Icons.access_time),
-              onTap: () => _pickTime(true),
+            TextField(
+              controller: _lunarTimeController,
+              decoration: const InputDecoration(
+                labelText: '提醒时间',
+                hintText: '例如 17:10',
+                prefixIcon: Icon(Icons.access_time),
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.datetime,
+              onChanged: (value) {
+                final t = _parseTime(value);
+                if (t != null) setState(() => _lunarTime = t);
+              },
             ),
           ],
         ),
@@ -202,7 +219,7 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
                   child: DropdownButtonFormField<int>(
                     value: _solarYear,
                     decoration: const InputDecoration(labelText: '年'),
-                    items: List.generate(121, (i) => 1900 + i)
+                    items: List.generate(201, (i) => 1900 + i)
                         .map((y) => DropdownMenuItem(value: y, child: Text('$y年')))
                         .toList(),
                     onChanged: (v) => setState(() => _solarYear = v),
@@ -233,12 +250,19 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('提醒时间'),
-              subtitle: Text(_formatTime(_solarTime)),
-              trailing: const Icon(Icons.access_time),
-              onTap: () => _pickTime(false),
+            TextField(
+              controller: _solarTimeController,
+              decoration: const InputDecoration(
+                labelText: '提醒时间',
+                hintText: '例如 17:10',
+                prefixIcon: Icon(Icons.access_time),
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.datetime,
+              onChanged: (value) {
+                final t = _parseTime(value);
+                if (t != null) setState(() => _solarTime = t);
+              },
             ),
           ],
         ),

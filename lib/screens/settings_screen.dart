@@ -26,7 +26,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         const SnackBar(content: Text('通知权限已获取')),
       );
     } else {
-      // iOS 拒绝后不会再弹窗，引导用户去系统设置手动开启
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -47,6 +46,47 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       );
     }
+  }
+
+  Future<void> _showPendingNotifications() async {
+    final notifications = await NotificationService().getPendingNotifications();
+    if (!mounted) return;
+
+    if (notifications.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('已注册的提醒'),
+          content: const Text('当前没有已注册的通知，请添加家人信息。'),
+          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('关闭'))],
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('已注册 ${notifications.length} 个提醒'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: notifications.length,
+            itemBuilder: (_, i) {
+              final n = notifications[i];
+              return ListTile(
+                dense: true,
+                title: Text(n.title ?? ''),
+                subtitle: Text(n.body ?? ''),
+                trailing: Text('ID:${n.id}'),
+              );
+            },
+          ),
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('关闭'))],
+      ),
+    );
   }
 
   Future<void> _export() async {
@@ -160,6 +200,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   soundEnabled: v,
                 );
               },
+            ),
+            const Divider(),
+
+            // 调试：查看已注册提醒
+            ListTile(
+              leading: const Icon(Icons.notifications_active_outlined, color: Colors.orange),
+              title: const Text('查看已注册提醒'),
+              subtitle: const Text('排查通知是否成功注册到系统'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: _showPendingNotifications,
             ),
             const Divider(),
 

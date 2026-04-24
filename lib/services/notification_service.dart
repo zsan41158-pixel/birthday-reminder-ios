@@ -210,6 +210,11 @@ class NotificationService {
     );
   }
 
+  /// 获取当前已注册的所有待发送通知（调试用）
+  Future<List<PendingNotificationRequest>> getPendingNotifications() async {
+    return await _plugin.pendingNotificationRequests();
+  }
+
   /// 取消某个成员的所有通知
   Future<void> cancelMemberNotifications(int memberId) async {
     // iOS 无法按 tag 取消，这里只能 cancelAll 后重新注册
