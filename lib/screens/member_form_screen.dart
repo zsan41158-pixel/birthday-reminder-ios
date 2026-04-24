@@ -92,12 +92,31 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
 
   TimeOfDay? _parseTime(String text) {
     final parts = text.split(':');
-    if (parts.length != 2) return null;
+    if (parts.length < 2) return null;
     final h = int.tryParse(parts[0]);
     final m = int.tryParse(parts[1]);
     if (h == null || m == null) return null;
     if (h < 0 || h > 23 || m < 0 || m > 59) return null;
     return TimeOfDay(hour: h, minute: m);
+  }
+
+  Future<void> _pickTime(bool isLunar) async {
+    final current = isLunar ? _lunarTime : _solarTime;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: current,
+    );
+    if (picked != null) {
+      setState(() {
+        if (isLunar) {
+          _lunarTime = picked;
+          _lunarTimeController.text = _formatTime(picked);
+        } else {
+          _solarTime = picked;
+          _solarTimeController.text = _formatTime(picked);
+        }
+      });
+    }
   }
 
   void _save() {
@@ -185,11 +204,15 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: _lunarTimeController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: '提醒时间',
                 hintText: '例如 17:10',
-                prefixIcon: Icon(Icons.access_time),
-                border: OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.access_time),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.schedule),
+                  onPressed: () => _pickTime(true),
+                ),
+                border: const OutlineInputBorder(),
               ),
               keyboardType: TextInputType.datetime,
               onChanged: (value) {
@@ -252,11 +275,15 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: _solarTimeController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: '提醒时间',
                 hintText: '例如 17:10',
-                prefixIcon: Icon(Icons.access_time),
-                border: OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.access_time),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.schedule),
+                  onPressed: () => _pickTime(false),
+                ),
+                border: const OutlineInputBorder(),
               ),
               keyboardType: TextInputType.datetime,
               onChanged: (value) {
