@@ -1,0 +1,53 @@
+name: birthday_reminder_ios
+description: 农历/公历家人生日定时提醒 iOS App
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.5.1
+
+  # Local database
+  sqflite: ^2.3.3
+  path: ^1.9.0
+
+  # Encryption
+  encrypt: ^5.0.1
+  flutter_secure_storage: ^9.2.2
+
+  # Notifications
+  flutter_local_notifications: ^17.1.2
+
+  # Permissions
+  permission_handler: ^11.3.1
+
+  # File sharing / picker
+  share_plus: ^9.0.0
+  file_picker: ^8.0.5
+  path_provider: ^2.1.3
+
+  # Lunar calendar (lightweight Dart implementation)
+  chinese_lunar_calendar: ^1.0.0
+
+  # Timezone support for notifications
+  timezone: ^0.9.3
+
+  # UI utilities
+  intl: ^0.19.0
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
