@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 import '../config/constants.dart';
@@ -43,16 +42,31 @@ class NotificationService {
   }
 
   Future<bool> requestPermission() async {
-    if (Platform.isIOS) {
-      final status = await Permission.notification.request();
-      return status.isGranted;
+    if (Platform.isIOS || Platform.isMacOS) {
+      final iosPlugin = _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+      final result = await iosPlugin?.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      return result ?? false;
     }
     return true;
   }
 
   Future<bool> get hasPermission async {
-    final status = await Permission.notification.status;
-    return status.isGranted;
+    if (Platform.isIOS || Platform.isMacOS) {
+      // iOS 没有直接查询通知权限的 API，用 UserDefaults 记录上次请求结果
+      // 这里简化处理：尝试请求（如果已授权直接返回 true，已拒绝会返回 false）
+      final iosPlugin = _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+      final result = await iosPlugin?.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      return result ?? false;
+    }
+    return true;
   }
 
   void _onNotificationResponse(NotificationResponse response) {

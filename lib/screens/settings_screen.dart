@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/settings_provider.dart';
 import '../services/backup_service.dart';
@@ -17,10 +19,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _requestNotificationPermission() async {
     final granted = await NotificationService().requestPermission();
-    if (mounted) {
+    if (!mounted) return;
+
+    if (granted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(granted ? '通知权限已获取' : '通知权限被拒绝，请前往系统设置开启'),
+        const SnackBar(content: Text('通知权限已获取')),
+      );
+    } else {
+      // iOS 拒绝后不会再弹窗，引导用户去系统设置手动开启
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('请手动开启通知权限'),
+          content: const Text(
+            '系统弹窗已被拒绝，请按以下步骤手动开启：\n\n'
+            '1. 打开 iPhone【设置】\n'
+            '2. 找到【通知】→【生日提醒】\n'
+            '3. 打开【允许通知】\n\n'
+            '开启后，生日当天会准时收到提醒。',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('知道了'),
+            ),
+          ],
         ),
       );
     }
