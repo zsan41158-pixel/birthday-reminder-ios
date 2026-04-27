@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
@@ -90,12 +91,16 @@ class NotificationService {
     await _plugin.cancelAll();
   }
 
-  /// 为单个成员注册未来 N 年的通知
-  Future<void> scheduleMemberNotifications(FamilyMember member) async {
-    if (member.id == null) return;
+  /// 为单个成员注册未来 N 年的通知，返回成功注册的数量
+  Future<int> scheduleMemberNotifications(FamilyMember member) async {
+    if (member.id == null) {
+      debugPrint('成员 ID 为空，跳过通知注册: ${member.name}');
+      return 0;
+    }
 
     final now = DateTime.now();
     final currentYear = now.year;
+    int scheduledCount = 0;
 
     // 农历生日通知
     if ((member.birthdayType == BirthdayType.lunar || member.birthdayType == BirthdayType.both) &&
@@ -105,13 +110,20 @@ class NotificationService {
         final year = currentYear + y;
         final solarDate = _lunar.lunarToSolar(member.lunarMonth!, member.lunarDay!, year: year);
         if (solarDate != null) {
-          await _scheduleNotification(
-            id: _generateNotificationId(member.id!, 0, year),
-            title: '生日提醒',
-            body: '今天是 ${member.name} 的农历生日（${_lunar.formatLunarDate(member.lunarMonth!, member.lunarDay!)}）',
-            scheduledDate: _combineDateAndTime(solarDate, member.lunarReminderTime ?? AppDefaults.reminderTime),
-            payload: 'dismiss:${member.id}:0',
-          );
+          try {
+            await _scheduleNotification(
+              id: _generateNotificationId(member.id!, 0, year),
+              title: '生日提醒',
+              body: '今天是 ${member.name} 的农历生日（${_lunar.formatLunarDate(member.lunarMonth!, member.lunarDay!)}）',
+              scheduledDate: _combineDateAndTime(solarDate, member.lunarReminderTime ?? AppDefaults.reminderTime),
+              payload: 'dismiss:${member.id}:0',
+            );
+            scheduledCount++;
+          } catch (e) {
+            debugPrint('农历通知注册失败 (year=$year): $e');
+          }
+        } else {
+          debugPrint('农历转公历失败: ${member.lunarMonth}月${member.lunarDay}日, year=$year');
         }
       }
     }
@@ -123,23 +135,35 @@ class NotificationService {
       for (int y = 0; y < NotificationConfig.scheduleAheadYears; y++) {
         final year = currentYear + y;
         final date = DateTime(year, member.solarMonth!, member.solarDay!);
-        await _scheduleNotification(
-          id: _generateNotificationId(member.id!, 1, year),
-          title: '生日提醒',
-          body: '今天是 ${member.name} 的公历生日（${member.solarMonth}月${member.solarDay}日）',
-          scheduledDate: _combineDateAndTime(date, member.solarReminderTime ?? AppDefaults.reminderTime),
-          payload: 'dismiss:${member.id}:1',
-        );
+        try {
+          await _scheduleNotification(
+            id: _generateNotificationId(member.id!, 1, year),
+            title: '生日提醒',
+            body: '今天是 ${member.name} 的公历生日（${member.solarMonth}月${member.solarDay}日）',
+            scheduledDate: _combineDateAndTime(date, member.solarReminderTime ?? AppDefaults.reminderTime),
+            payload: 'dismiss:${member.id}:1',
+          );
+          scheduledCount++;
+        } catch (e) {
+          debugPrint('公历通知注册失败 (year=$year): $e');
+        }
       }
     }
+
+    debugPrint('成员 ${member.name} 注册了 $scheduledCount 个通知');
+    return scheduledCount;
   }
 
   /// 批量为所有成员注册通知
   Future<void> scheduleAllMembersNotifications(List<FamilyMember> members) async {
+    debugPrint('开始批量注册通知，成员数: ${members.length}');
     await cancelAllBirthdayNotifications();
+    int scheduledCount = 0;
     for (final member in members) {
-      await scheduleMemberNotifications(member);
+      final count = await scheduleMemberNotifications(member);
+      scheduledCount += count;
     }
+    debugPrint('通知注册完成，共注册 $scheduledCount 个通知');
   }
 
   /// 创建稍后提醒通知（10分钟后）
@@ -168,7 +192,11 @@ class NotificationService {
     String? payload,
   }) async {
     // 不注册过去的时间
-    if (scheduledDate.isBefore(DateTime.now())) return;
+    final now = DateTime.now();
+    if (scheduledDate.isBefore(now)) {
+      debugPrint('跳过过去时间的通知: $scheduledDate (当前: $now)');
+      return;
+    }
 
     const androidDetails = AndroidNotificationDetails(
       NotificationConfig.channelId,
@@ -196,6 +224,8 @@ class NotificationService {
       scheduledDate.minute,
       scheduledDate.second,
     );
+
+    debugPrint('注册通知: id=$id, title=$title, time=$tzScheduledDate');
 
     await _plugin.zonedSchedule(
       id,

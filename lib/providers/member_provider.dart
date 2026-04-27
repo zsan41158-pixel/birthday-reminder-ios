@@ -22,12 +22,15 @@ class MemberListNotifier extends StateNotifier<AsyncValue<List<FamilyMember>>> {
     try {
       final members = await _dbRepo.getAllMembers();
       state = AsyncValue.data(members);
-      // 重新调度所有通知（通知调度失败不应影响列表展示）
+      // 重新调度所有通知
       try {
         await _notifyService.scheduleAllMembersNotifications(members);
-      } catch (notifyErr) {
-        // 通知调度失败静默处理，避免覆盖列表数据状态
+      } catch (notifyErr, notifySt) {
+        // 通知调度失败不影响列表展示，但打印日志以便排查
         debugPrint('通知调度失败: $notifyErr');
+        debugPrint('$notifySt');
+        // 把错误附加到状态中，让 UI 可以提示用户
+        state = AsyncValue.data(members);
       }
     } catch (e, st) {
       state = AsyncValue.error(e, st);
