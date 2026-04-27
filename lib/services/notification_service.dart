@@ -114,7 +114,7 @@ class NotificationService {
             await _scheduleNotification(
               id: _generateNotificationId(member.id!, 0, year),
               title: '生日提醒',
-              body: '今天是 ${member.name} 的农历生日（${_lunar.formatLunarDate(member.lunarMonth!, member.lunarDay!)}）',
+              body: '今天是 ${member.name} 的农历生日（${year}年${_lunar.formatLunarDate(member.lunarMonth!, member.lunarDay!)}）',
               scheduledDate: _combineDateAndTime(solarDate, member.lunarReminderTime ?? AppDefaults.reminderTime),
               payload: 'dismiss:${member.id}:0',
             );
@@ -139,7 +139,7 @@ class NotificationService {
           await _scheduleNotification(
             id: _generateNotificationId(member.id!, 1, year),
             title: '生日提醒',
-            body: '今天是 ${member.name} 的公历生日（${member.solarMonth}月${member.solarDay}日）',
+            body: '今天是 ${member.name} 的公历生日（${year}年${member.solarMonth}月${member.solarDay}日）',
             scheduledDate: _combineDateAndTime(date, member.solarReminderTime ?? AppDefaults.reminderTime),
             payload: 'dismiss:${member.id}:1',
           );
@@ -209,6 +209,7 @@ class NotificationService {
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      interruptionLevel: InterruptionLevel.active,
     );
     const details = NotificationDetails(
       android: androidDetails,
@@ -216,14 +217,7 @@ class NotificationService {
       macOS: darwinDetails,
     );
 
-    final tzScheduledDate = tz.TZDateTime.local(
-      scheduledDate.year,
-      scheduledDate.month,
-      scheduledDate.day,
-      scheduledDate.hour,
-      scheduledDate.minute,
-      scheduledDate.second,
-    );
+    final tzScheduledDate = tz.TZDateTime.from(scheduledDate, tz.local);
 
     debugPrint('注册通知: id=$id, title=$title, time=$tzScheduledDate');
 
