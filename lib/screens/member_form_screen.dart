@@ -42,12 +42,14 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
       _repeatRule = m.repeatRule;
       _lunarMonth = m.lunarMonth;
       _lunarDay = m.lunarDay;
-      if (m.lunarReminderTime != null) {
+      if (m.lunarReminderTime != null && m.lunarReminderTime!.contains(':')) {
         final parts = m.lunarReminderTime!.split(':');
-        _lunarTime = TimeOfDay(
-          hour: int.tryParse(parts[0]) ?? 8,
-          minute: int.tryParse(parts[1]) ?? 0,
-        );
+        if (parts.length >= 2) {
+          _lunarTime = TimeOfDay(
+            hour: int.tryParse(parts[0]) ?? 8,
+            minute: int.tryParse(parts[1]) ?? 0,
+          );
+        }
         _lunarTimeController.text = _formatTime(_lunarTime);
       } else {
         _lunarTimeController.text = _formatTime(_lunarTime);
@@ -55,12 +57,14 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
       _solarYear = m.solarYear;
       _solarMonth = m.solarMonth;
       _solarDay = m.solarDay;
-      if (m.solarReminderTime != null) {
+      if (m.solarReminderTime != null && m.solarReminderTime!.contains(':')) {
         final parts = m.solarReminderTime!.split(':');
-        _solarTime = TimeOfDay(
-          hour: int.tryParse(parts[0]) ?? 8,
-          minute: int.tryParse(parts[1]) ?? 0,
-        );
+        if (parts.length >= 2) {
+          _solarTime = TimeOfDay(
+            hour: int.tryParse(parts[0]) ?? 8,
+            minute: int.tryParse(parts[1]) ?? 0,
+          );
+        }
         _solarTimeController.text = _formatTime(_solarTime);
       } else {
         _solarTimeController.text = _formatTime(_solarTime);
@@ -146,13 +150,13 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
       lunarMonth: (_birthdayType == BirthdayType.lunar || _birthdayType == BirthdayType.both) ? _lunarMonth : null,
       lunarDay: (_birthdayType == BirthdayType.lunar || _birthdayType == BirthdayType.both) ? _lunarDay : null,
       lunarReminderTime: (_birthdayType == BirthdayType.lunar || _birthdayType == BirthdayType.both)
-          ? _formatTime(_lunarTime)
+          ? _formatTimeForDb(_lunarTime)
           : null,
       solarYear: (_birthdayType == BirthdayType.solar || _birthdayType == BirthdayType.both) ? _solarYear : null,
       solarMonth: (_birthdayType == BirthdayType.solar || _birthdayType == BirthdayType.both) ? _solarMonth : null,
       solarDay: (_birthdayType == BirthdayType.solar || _birthdayType == BirthdayType.both) ? _solarDay : null,
       solarReminderTime: (_birthdayType == BirthdayType.solar || _birthdayType == BirthdayType.both)
-          ? _formatTime(_solarTime)
+          ? _formatTimeForDb(_solarTime)
           : null,
       repeatRule: _repeatRule,
       createdAt: widget.member?.createdAt ?? DateTime.now().toIso8601String(),

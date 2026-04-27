@@ -222,7 +222,13 @@ class NotificationService {
   }
 
   DateTime _combineDateAndTime(DateTime date, String timeStr) {
+    if (timeStr.isEmpty || !timeStr.contains(':')) {
+      return DateTime(date.year, date.month, date.day, 8, 0, 0);
+    }
     final parts = timeStr.split(':');
+    if (parts.length < 2) {
+      return DateTime(date.year, date.month, date.day, 8, 0, 0);
+    }
     final hour = int.tryParse(parts[0]) ?? 8;
     final minute = int.tryParse(parts[1]) ?? 0;
     final second = parts.length > 2 ? int.tryParse(parts[2]) ?? 0 : 0;

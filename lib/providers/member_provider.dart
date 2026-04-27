@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/family_member.dart';
 import '../repositories/database_repository.dart';
@@ -21,8 +22,13 @@ class MemberListNotifier extends StateNotifier<AsyncValue<List<FamilyMember>>> {
     try {
       final members = await _dbRepo.getAllMembers();
       state = AsyncValue.data(members);
-      // 重新调度所有通知
-      await _notifyService.scheduleAllMembersNotifications(members);
+      // 重新调度所有通知（通知调度失败不应影响列表展示）
+      try {
+        await _notifyService.scheduleAllMembersNotifications(members);
+      } catch (notifyErr) {
+        // 通知调度失败静默处理，避免覆盖列表数据状态
+        debugPrint('通知调度失败: $notifyErr');
+      }
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }

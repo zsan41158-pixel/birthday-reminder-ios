@@ -64,6 +64,14 @@ class LunarService {
   /// 公历日期转农历日期
   /// 返回 {year, month, day, isLeap}
   Map<String, int> solarToLunar(DateTime solar) {
+    // 限制在支持范围内，避免数组越界
+    if (solar.isBefore(DateTime(1900, 1, 31))) {
+      return {'year': 1900, 'month': 1, 'day': 1, 'isLeap': 0};
+    }
+    if (solar.isAfter(DateTime(2100, 12, 31))) {
+      return {'year': 2100, 'month': 12, 'day': 30, 'isLeap': 0};
+    }
+
     DateTime baseDate = DateTime(1900, 1, 31);
     int offset = solar.difference(baseDate).inDays;
 
@@ -80,6 +88,9 @@ class LunarService {
     }
 
     int lunarYear = iYear;
+    if (lunarYear > 2100) lunarYear = 2100;
+    if (lunarYear < 1900) lunarYear = 1900;
+
     int leap = _leapMonth(lunarYear);
     bool isLeap = false;
 
@@ -123,6 +134,9 @@ class LunarService {
   DateTime? lunarToSolar(int lunarMonth, int lunarDay, {int? year}) {
     final targetYear = year ?? DateTime.now().year;
     if (targetYear < 1900 || targetYear > 2100) return null;
+
+    // 限制农历月份和日期在合理范围
+    if (lunarMonth < 1 || lunarMonth > 12 || lunarDay < 1 || lunarDay > 30) return null;
 
     // 从当年1月1日开始扫描最多400天（覆盖全年+闰月）
     final start = DateTime(targetYear, 1, 1);

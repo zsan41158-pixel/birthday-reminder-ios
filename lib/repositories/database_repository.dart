@@ -40,7 +40,8 @@ class DatabaseRepository {
     return '${base64Encode(iv.bytes)}:${encrypted.base64}';
   }
 
-  String _decrypt(String cipherText) {
+  String _decrypt(String? cipherText) {
+    if (cipherText == null || cipherText.isEmpty) return '';
     if (_encrypter == null) return cipherText;
     try {
       final parts = cipherText.split(':');
@@ -123,7 +124,7 @@ class DatabaseRepository {
     final maps = await db.query('family_members', where: 'id = ?', whereArgs: [id]);
     if (maps.isEmpty) return null;
     final map = Map<String, dynamic>.from(maps.first);
-    map['name'] = _decrypt(map['name']);
+    map['name'] = _decrypt(map['name'] as String?);
     return FamilyMember.fromMap(map);
   }
 
@@ -132,7 +133,7 @@ class DatabaseRepository {
     final maps = await db.query('family_members', orderBy: 'created_at DESC');
     return maps.map((m) {
       final map = Map<String, dynamic>.from(m);
-      map['name'] = _decrypt(map['name']);
+      map['name'] = _decrypt(map['name'] as String?);
       return FamilyMember.fromMap(map);
     }).toList();
   }
