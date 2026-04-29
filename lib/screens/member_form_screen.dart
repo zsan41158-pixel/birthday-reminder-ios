@@ -123,7 +123,7 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
     }
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
     if (_birthdayType == BirthdayType.lunar || _birthdayType == BirthdayType.both) {
@@ -163,12 +163,12 @@ class _MemberFormScreenState extends ConsumerState<MemberFormScreen> {
     );
 
     if (_isEdit) {
-      ref.read(memberListProvider.notifier).updateMember(member);
+      await ref.read(memberListProvider.notifier).updateMember(member);
     } else {
-      ref.read(memberListProvider.notifier).addMember(member);
+      await ref.read(memberListProvider.notifier).addMember(member);
     }
 
-    Navigator.pop(context);
+    if (mounted) Navigator.pop(context);
   }
 
   Widget _buildLunarSection() {

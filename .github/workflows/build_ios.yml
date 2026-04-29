@@ -24,12 +24,11 @@ jobs:
       - name: Generate iOS project files
         run: |
           set -x
-          flutter create . --platforms ios
+          flutter create . --platforms ios --overwrite
 
       - name: Restore custom iOS files
         run: |
-          # flutter create 会覆盖原生文件，把我们修改过的关键文件恢复回来
-          cp -f ios/Runner/AppDelegate.swift ios/Runner/AppDelegate.swift.bak 2>/dev/null || true
+          # flutter create 会覆盖原生文件，把我们修改过的关键文件从 git 恢复回来
           git checkout ios/Runner/AppDelegate.swift || true
           git checkout ios/Runner/Info.plist || true
 

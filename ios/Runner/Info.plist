@@ -50,7 +50,7 @@
 		<string>fetch</string>
 		<string>processing</string>
 	</array>
-	<key>NSUserNotificationUsageDescription</key>
+	<key>NSUserNotificationsUsageDescription</key>
 	<string>我们需要发送生日提醒通知，以便在家人农历/公历生日当天准时提醒您。</string>
 </dict>
 </plist>

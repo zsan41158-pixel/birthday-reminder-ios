@@ -36,10 +36,21 @@ class NotificationService {
       onDidReceiveNotificationResponse: _onNotificationResponse,
     );
 
-    // 初始化时区数据
+    // 初始化时区数据并设置本地时区
     tz_data.initializeTimeZones();
+    _setupLocalTimezone();
 
     _initialized = true;
+  }
+
+  void _setupLocalTimezone() {
+    try {
+      // 优先使用中国时区（农历生日应用主要面向中文用户）
+      final location = tz.getLocation('Asia/Shanghai');
+      tz.setLocalLocation(location);
+    } catch (e) {
+      debugPrint('设置本地时区失败: $e');
+    }
   }
 
   Future<bool> requestPermission() async {

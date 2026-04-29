@@ -58,7 +58,7 @@ class LunarService {
 
   // 返回农历y年m月的总天数
   static int _monthDays(int y, int m) {
-    return (_lunarInfo[y - 1900] & (0x10000 >> m)) != 0 ? 30 : 29;
+    return (_lunarInfo[y - 1900] & (0x8000 >> (m - 1))) != 0 ? 30 : 29;
   }
 
   /// 公历日期转农历日期
