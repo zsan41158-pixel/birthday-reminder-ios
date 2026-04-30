@@ -252,8 +252,19 @@ class NotificationService {
 
   /// 取消某个成员的所有通知
   Future<void> cancelMemberNotifications(int memberId) async {
-    // iOS 无法按 tag 取消，这里只能 cancelAll 后重新注册
-    // 实际由调用方先获取全部成员，重新 scheduleAll
+    // 获取所有待发送的通知
+    final pending = await _plugin.pendingNotificationRequests();
+    
+    // 根据 ID 规则过滤出该成员的通知并取消
+    for (final notification in pending) {
+      // ID 格式: memberId * 100000 + type * 10000 + seed
+      // 判断条件：notification.id / 100000 == memberId
+      if (notification.id ~/ 100000 == memberId) {
+        await _plugin.cancel(notification.id);
+      }
+    }
+    
+    debugPrint('已取消成员 $memberId 的通知');
   }
 
   DateTime _combineDateAndTime(DateTime date, String timeStr) {
@@ -270,8 +281,9 @@ class NotificationService {
     return DateTime(date.year, date.month, date.day, hour, minute, second);
   }
 
-  /// 生成唯一通知ID：memberId * 10000 + type * 1000 + yearOffset
+  /// 生成唯一通知ID：使用取模运算避免溢出
+  /// 格式：(memberId % 1000) * 100000 + type * 10000 + (seed % 10000)
   int _generateNotificationId(int memberId, int type, int seed) {
-    return memberId * 100000 + type * 10000 + seed;
+    return (memberId % 1000) * 100000 + type * 10000 + (seed % 10000);
   }
 }
